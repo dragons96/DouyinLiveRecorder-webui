@@ -2,6 +2,24 @@
 
 > 本项目是基于 [DouyinLiveRecorder](https://github.com/ihmily/DouyinLiveRecorder) 实现的一个直播在线管理平台，提供了友好的Web界面和更丰富的管理功能。
 
+录制任务页面
+
+![1743681852134](image/README/1743681852134.png)
+
+录制任务详情页面![1743681799524](image/README/1743681799524.png)
+
+用户管理
+
+![1743681917149](image/README/1743681917149.png)
+
+平台管理
+
+![1743681933255](image/README/1743681933255.png)
+
+项目管理
+
+![1743681947324](image/README/1743681947324.png)
+
 ## 快速开始
 
 ### 环境要求
@@ -308,28 +326,4 @@ pnpm setup:platforms
 
 ## 许可证
 
-本项目采用 MIT 许可证。
-
-```
-MIT License
-
-Copyright (c) 2023 Live Streaming Management
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+本项目采用 MIT 许可证。详细许可条款请参阅项目根目录中的 LICENSE 文件。
