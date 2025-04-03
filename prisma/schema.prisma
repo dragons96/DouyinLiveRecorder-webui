@@ -1,0 +1,202 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "foreignKeys"
+}
+
+model User {
+  id              String          @id @default(cuid())
+  name            String?
+  email           String          @unique
+  password        String
+  emailVerified   DateTime?
+  image           String?
+  role            String          @default("user")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  tasks           RecordingTask[]
+  managedProjects Project[]       @relation("ProjectManagers")
+  projects        Project[]       @relation("UserProjects")
+
+  @@map("users")
+}
+
+model Project {
+  id          String          @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  tasks       RecordingTask[]
+  managers    User[]          @relation("ProjectManagers")
+  users       User[]          @relation("UserProjects")
+  workers     WorkerNode[] // 关联的工作节点
+
+  @@map("projects")
+}
+
+model Platform {
+  id                String                       @id @default(cuid())
+  name              String                       @unique
+  description       String?
+  apiKey            String?
+  apiSecret         String?
+  enabled           Boolean                      @default(true)
+  createdAt         DateTime                     @default(now())
+  updatedAt         DateTime                     @updatedAt
+  tasks             RecordingTask[]
+  livestreams       LiveStream[]                 @relation("PlatformLiveStreams")
+  workerCapacities  WorkerNodePlatformCapacity[] // 工作节点在该平台的容量配置
+
+  @@map("platforms")
+}
+
+model RecordingTask {
+  id                    String                           @id @default(cuid())
+  name                  String
+  description           String?
+  status                String                           @default("idle")
+  enabled               Boolean                          @default(true)
+  startedAt             DateTime?
+  endedAt               DateTime?
+  createdAt             DateTime                         @default(now())
+  updatedAt             DateTime                         @updatedAt
+  streamUrls            String  @db.Text
+  platformParams        String? @db.Text
+  userId                String
+  projectId             String
+  platformId            String
+  platform              Platform                         @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  project               Project                          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user                  User                             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs                  TaskLog[]
+  taskLivestreams       TaskLivestreamAssignment[]
+  taskWorkerAssignments TaskLivestreamWorkerAssignment[]
+  recordingPeriods      RecordingPeriod[]               // 录制时间段记录
+
+  @@map("recording_tasks")
+}
+
+model TaskLog {
+  id        String        @id @default(cuid())
+  message   String
+  level     String        @default("info")
+  createdAt DateTime      @default(now())
+  taskId    String
+  task      RecordingTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_logs")
+}
+
+model WorkerNode {
+  id                    String                        @id @default(cuid())
+  nodeId                String                        @unique
+  status                String                        @default("STOPPED") // RUNNING, STOPPED
+  maxRecordings         Int                           @default(5) // 默认最大录制数，向后兼容
+  currentRecordings     Int                           @default(0) // 默认当前录制数，向后兼容
+  lastSeenAt            DateTime?
+  projectId             String? // 关联项目ID，为null表示通用工作节点
+  createdAt             DateTime                      @default(now())
+  updatedAt             DateTime                      @updatedAt
+  project               Project?                      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  livestreamAssignments LivestreamWorkerAssignment[]
+  platformCapacities    WorkerNodePlatformCapacity[] // 每个平台的录制容量
+
+  @@map("worker_nodes")
+}
+
+model LiveStream {
+  id                String                       @id @default(cuid())
+  url               String                       @unique // 直播流URL，唯一约束
+  platformId        String
+  platform          Platform                     @relation("PlatformLiveStreams", fields: [platformId], references: [id], onDelete: Cascade)
+  createdAt         DateTime                     @default(now())
+  updatedAt         DateTime                     @updatedAt
+  taskAssignments   TaskLivestreamAssignment[]
+  workerAssignments LivestreamWorkerAssignment[]
+
+  @@map("live_streams")
+}
+
+model TaskLivestreamAssignment {
+  id           String        @id @default(cuid())
+  taskId       String
+  livestreamId String
+  status       String        @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  task         RecordingTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  livestream   LiveStream    @relation(fields: [livestreamId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, livestreamId])
+  @@map("task_livestream_assignments")
+}
+
+model LivestreamWorkerAssignment {
+  id              String                           @id @default(cuid())
+  livestreamId    String
+  workerNodeId    String
+  referenceCount  Int                              @default(1) // 引用计数，表示有多少任务在使用该流
+  status          String                           @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  streamingStatus String                           @default("UNKNOWN") // UNKNOWN, WAITING, STREAMING 分别代表未知、等待上播、录制中
+  createdAt       DateTime                         @default(now())
+  updatedAt       DateTime                         @updatedAt
+  livestream      LiveStream                       @relation(fields: [livestreamId], references: [id], onDelete: Cascade)
+  workerNode      WorkerNode                       @relation(fields: [workerNodeId], references: [id], onDelete: Cascade)
+  taskAssignments TaskLivestreamWorkerAssignment[]
+
+  @@unique([livestreamId, workerNodeId])
+  @@map("livestream_worker_assignments")
+}
+
+// 新增任务-直播流-工作节点三者关联表
+model TaskLivestreamWorkerAssignment {
+  id                           String                     @id @default(cuid())
+  taskId                       String
+  livestreamWorkerAssignmentId String
+  status                       String                     @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  createdAt                    DateTime                   @default(now())
+  updatedAt                    DateTime                   @updatedAt
+  task                         RecordingTask              @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  livestreamWorkerAssignment   LivestreamWorkerAssignment @relation(fields: [livestreamWorkerAssignmentId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, livestreamWorkerAssignmentId])
+  @@map("task_livestream_worker_assignments")
+}
+
+// 工作节点平台录制容量
+model WorkerNodePlatformCapacity {
+  id                String     @id @default(cuid())
+  workerNodeId      String
+  platformId        String
+  maxRecordings     Int        @default(5) // 该平台最大录制数
+  currentRecordings Int        @default(0) // 该平台当前录制数
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  workerNode        WorkerNode @relation(fields: [workerNodeId], references: [id], onDelete: Cascade)
+  platform          Platform   @relation(fields: [platformId], references: [id], onDelete: Cascade)
+
+  @@unique([workerNodeId, platformId])
+  @@map("worker_node_platform_capacities")
+}
+
+// 任务录制时间段记录
+model RecordingPeriod {
+  id          String        @id @default(cuid())
+  taskId      String
+  startedAt   DateTime
+  endedAt     DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  task        RecordingTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  // 可选存储该次录制期间的配置信息
+  streamUrls  String? @db.Text       // 该次录制的URL列表，JSON字符串
+  platformParams String? @db.Text    // 该次录制的平台参数，JSON字符串
+  workerData  String? @db.Text // 工作节点信息，JSON字符串，使用Text类型存储大文本
+
+  @@map("recording_periods")
+}
