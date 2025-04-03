@@ -2,6 +2,8 @@
 
 > 本项目是基于 [DouyinLiveRecorder](https://github.com/ihmily/DouyinLiveRecorder) 实现的一个直播在线管理平台，提供了友好的Web界面和更丰富的管理功能。
 
+> 录制工作节点源码将在2025-04-07之后发布。
+
 录制任务页面
 
 ![1743681852134](image/README/1743681852134.png)
