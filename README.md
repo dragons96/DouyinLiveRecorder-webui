@@ -119,7 +119,10 @@ pnpm setup:platforms
 
 该命令会自动创建以下平台：
 
-1. 抖音 (https://live.douyin.com/123456789)
+1. 抖音 (支持多种格式的URL):
+   - https://live.douyin.com/123456789 (数字ID)
+   - https://live.douyin.com/yall1102 (字母数字混合ID)
+   - https://v.douyin.com/iQFeBnt/ (短链接格式)
 2. 快手 (https://live.kuaishou.com/u/yall1102)
 3. 虎牙 (https://www.huya.com/52333)
 4. 斗鱼 (https://www.douyu.com/3637778?dyshid=)
