@@ -389,21 +389,23 @@ export function WorkerNodesList({ workerNodes, isAdmin = false, isSuperAdmin = f
           <p className="text-muted-foreground text-center py-6">暂无工作节点</p>
         ) : (
           <Tabs defaultValue="general">
-            <TabsList className="mb-4">
-              <TabsTrigger value="general">总览</TabsTrigger>
-              {platforms.map(platform => (
-                <TabsTrigger key={platform.id} value={platform.id}>
-                  {platform.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            <div className="relative">
+              <TabsList className="flex flex-wrap gap-1 h-auto justify-start w-full">
+                <TabsTrigger value="general">总览</TabsTrigger>
+                {platforms.map(platform => (
+                  <TabsTrigger key={platform.id} value={platform.id}>
+                    {platform.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
             
-            <TabsContent value="general">
+            <TabsContent value="general" className="mt-4">
               {renderGeneralView()}
             </TabsContent>
             
             {platforms.map(platform => (
-              <TabsContent key={platform.id} value={platform.id}>
+              <TabsContent key={platform.id} value={platform.id} className="mt-4">
                 {renderPlatformView(platform.id)}
               </TabsContent>
             ))}
