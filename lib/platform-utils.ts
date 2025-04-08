@@ -12,8 +12,8 @@ type PlatformUrlPattern = {
 const platformPatterns: PlatformUrlPattern[] = [
   {
     name: "抖音",
-    pattern: /^https:\/\/live\.douyin\.com\/\d+/,
-    exampleUrl: "https://live.douyin.com/123456789",
+    pattern: /^https:\/\/(live\.douyin\.com\/(\d+|[a-zA-Z0-9_]+)|v\.douyin\.com\/[a-zA-Z0-9]+\/?)/,
+    exampleUrl: "例如：https://live.douyin.com/123456789、https://live.douyin.com/yall1102、https://v.douyin.com/iQFeBnt/",
   },
   {
     name: "快手",

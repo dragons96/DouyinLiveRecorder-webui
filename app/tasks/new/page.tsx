@@ -305,7 +305,9 @@ export default function NewTaskPage() {
                   name="liveUrls"
                   value={platformParams.liveUrls}
                   onChange={handlePlatformParamsChange}
-                  placeholder={`每行一个直播地址，例如：${selectedPlatform?.name === '抖音' ? 'https://live.douyin.com/123456789' : '请输入直播地址'}`}
+                  placeholder={`每行一个直播地址，例如：${selectedPlatform?.name === '抖音' ? 
+'https://live.douyin.com/123456789、https://live.douyin.com/yall1102 或 https://v.douyin.com/iQFeBnt/' : 
+'请输入直播地址'}`}
                   rows={3}
                   required
                 />

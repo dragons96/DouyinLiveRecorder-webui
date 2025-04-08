@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { use } from "react"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,14 +21,15 @@ import { toast } from "sonner"
 import { useEffect } from "react"
 
 interface NewTaskPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default function NewTaskPage({ params }: NewTaskPageProps) {
   const router = useRouter()
-  const { id } = params;
+  const unwrappedParams = use(params)
+  const { id } = unwrappedParams;
   
   const [isLoading, setIsLoading] = useState(false)
   const [platforms, setPlatforms] = useState<{ id: string; name: string }[]>([])

@@ -9,18 +9,20 @@ import { Plus } from "lucide-react"
 import { db } from "@/lib/db"
 import { checkProjectAccess } from "@/lib/auth-utils"
 import { TasksList } from "@/components/tasks/tasks-list"
+import { use } from "react"
 
 interface TasksPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function TasksPage({ params }: TasksPageProps) {
   const session = await getServerSession(authOptions)
   
-  // 解构params对象，避免直接访问
-  const { id } = params;
+  // 使用 React.use() 解包 params
+  const unwrappedParams = use(params)
+  const { id } = unwrappedParams
 
   if (!session) {
     redirect("/login")

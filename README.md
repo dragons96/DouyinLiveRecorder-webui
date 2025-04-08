@@ -75,9 +75,10 @@ pnpm setup:platforms
 pnpm dev
 ```
 
-6. 访问应用
+6. 访问应用，打开浏览器访问 [http://localhost:3000](http://localhost:3000)
+7. 通过注册创建用户，第一个创建用户为超级管理员，后续用户均为普通用户
 
-打开浏览器访问 [http://localhost:3000](http://localhost:3000)
+
 
 ## 项目概述
 
