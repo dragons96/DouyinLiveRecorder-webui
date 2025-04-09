@@ -1,4 +1,4 @@
-# 直播录制管理系统
+# DouyinLiveRecorder-webui（直播录制管理系统）
 
 > 本项目是基于 [DouyinLiveRecorder](https://github.com/ihmily/DouyinLiveRecorder) 实现的一个直播在线管理平台，提供了友好的Web界面和更丰富的管理功能。
 
@@ -70,6 +70,8 @@ graph TD
    - Web界面显示录制完成的状态和文件信息
 
 这种基于数据库的解耦设计使得前端界面与工作节点之间无需直接通信，提高了系统的可扩展性和容错性。工作节点可以在任何位置部署，只需确保能够连接到同一个MySQL数据库即可。
+
+<font color="red">PS：DouyinLiveRecorder-webui使用prisma orm，DouyinLiveRecorder-worker(工作节点)使用sqlalchemy，理论上可以迁移任何适配的关系型数据库，不强制使用MYSQL</font>
 
 ## 快速开始
 
