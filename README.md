@@ -39,8 +39,8 @@
 1. 克隆仓库
 
 ```bash
-git clone https://github.com/your-username/live-streaming-management.git
-cd live-streaming-management
+git clone https://github.com/your-username/DouyinLiveRecorder-webui.git
+cd DouyinLiveRecorder-webui
 ```
 
 2. 安装依赖
@@ -302,7 +302,7 @@ pnpm setup:platform-capacity
 
    ```bash
    git clone [仓库地址]
-   cd live-streaming-management
+   cd DouyinLiveRecorder-webui
    ```
 2. 安装依赖
 
