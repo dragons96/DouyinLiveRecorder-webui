@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { checkUserRole } from "@/lib/auth-utils"
-import { markUserForUpdate } from "../../auth/check-session-update/route"
+import { markUserForUpdate } from "../../../auth/check-session-update/route"
 
 interface Params {
   params: {
