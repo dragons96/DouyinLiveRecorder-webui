@@ -12,18 +12,20 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Home } from "lucide-react"
 import type { RecordingTask } from "@/types"
+import { use } from "react"
 
 interface TaskPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function TaskPage({ params }: TaskPageProps) {
   const session = await getServerSession(authOptions)
   
-  // 解构params对象，避免直接访问
-  const { id } = params;
+  // 使用 React.use() 解包 params
+  const unwrappedParams = use(params)
+  const { id } = unwrappedParams
 
   if (!session) {
     redirect("/login")

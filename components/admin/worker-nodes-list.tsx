@@ -59,7 +59,26 @@ export function WorkerNodesList({ workerNodes, isAdmin = false, isSuperAdmin = f
   const [inputValue, setInputValue] = useState<number>(0);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, lastSeenAt: string | null) => {
+    // 检查最后心跳时间是否超过1天
+    const isInactive = () => {
+      if (!lastSeenAt) return true; // 从未连接视为不活跃
+      
+      try {
+        const lastSeen = new Date(lastSeenAt);
+        const now = new Date();
+        const oneDayInMs = 24 * 60 * 60 * 1000; // 一天的毫秒数
+        return now.getTime() - lastSeen.getTime() > oneDayInMs;
+      } catch (e) {
+        return true; // 日期解析错误时，视为不活跃
+      }
+    };
+    
+    // 如果状态是RUNNING但最后心跳超过1天，视为已停止
+    if (status.toUpperCase() === "RUNNING" && isInactive()) {
+      return <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200">长时间无响应</Badge>;
+    }
+    
     switch (status.toUpperCase()) {
       case "RUNNING":
         return <Badge className="bg-green-500 text-white">运行中</Badge>
@@ -73,8 +92,33 @@ export function WorkerNodesList({ workerNodes, isAdmin = false, isSuperAdmin = f
   const formatLastSeen = (lastSeen: string | null) => {
     if (!lastSeen) return "从未连接"
     try {
-      return formatDistanceToNow(new Date(lastSeen), { addSuffix: true, locale: zhCN })
+      // 解析时间并手动调整时区差异
+      const lastSeenDate = new Date(lastSeen);
+      
+      // 计算现在和最后活跃时间的真实时间差
+      const now = new Date();
+      const diffMs = now.getTime() - lastSeenDate.getTime();
+      
+      // 如果时间差小于1分钟，显示"刚刚"
+      if (diffMs < 60000) {
+        return "刚刚";
+      }
+      
+      // 如果时间差不到24小时，显示具体小时数
+      if (diffMs < 86400000) {
+        const hours = Math.floor(diffMs / 3600000);
+        if (hours < 1) {
+          const minutes = Math.floor(diffMs / 60000);
+          return `${minutes} 分钟前`;
+        }
+        return `${hours} 小时前`;
+      }
+      
+      // 超过24小时，显示天数
+      const days = Math.floor(diffMs / 86400000);
+      return `${days} 天前`;
     } catch (e) {
+      console.error('格式化时间出错:', e);
       return "未知"
     }
   }
@@ -173,7 +217,7 @@ export function WorkerNodesList({ workerNodes, isAdmin = false, isSuperAdmin = f
               return (
                 <TableRow key={node.id}>
                   <TableCell className="font-medium">{node.nodeId}</TableCell>
-                  <TableCell>{getStatusBadge(node.status)}</TableCell>
+                  <TableCell>{getStatusBadge(node.status, node.lastSeenAt)}</TableCell>
                   <TableCell>
                     {hasProject(node) ? (
                       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
@@ -300,7 +344,7 @@ export function WorkerNodesList({ workerNodes, isAdmin = false, isSuperAdmin = f
               return (
                 <TableRow key={node.id}>
                   <TableCell className="font-medium">{node.nodeId}</TableCell>
-                  <TableCell>{getStatusBadge(node.status)}</TableCell>
+                  <TableCell>{getStatusBadge(node.status, node.lastSeenAt)}</TableCell>
                   <TableCell>
                     {hasProject(node) ? (
                       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
@@ -389,21 +433,23 @@ export function WorkerNodesList({ workerNodes, isAdmin = false, isSuperAdmin = f
           <p className="text-muted-foreground text-center py-6">暂无工作节点</p>
         ) : (
           <Tabs defaultValue="general">
-            <TabsList className="mb-4">
-              <TabsTrigger value="general">总览</TabsTrigger>
-              {platforms.map(platform => (
-                <TabsTrigger key={platform.id} value={platform.id}>
-                  {platform.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            <div className="relative">
+              <TabsList className="flex flex-wrap gap-1 h-auto justify-start w-full">
+                <TabsTrigger value="general">总览</TabsTrigger>
+                {platforms.map(platform => (
+                  <TabsTrigger key={platform.id} value={platform.id}>
+                    {platform.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
             
-            <TabsContent value="general">
+            <TabsContent value="general" className="mt-4">
               {renderGeneralView()}
             </TabsContent>
             
             {platforms.map(platform => (
-              <TabsContent key={platform.id} value={platform.id}>
+              <TabsContent key={platform.id} value={platform.id} className="mt-4">
                 {renderPlatformView(platform.id)}
               </TabsContent>
             ))}

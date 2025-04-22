@@ -19,8 +19,22 @@ interface RootLayoutProps {
   children: React.ReactNode
 }
 
+// 定义主题映射
+const themeMap = {
+  light: "light",
+  dark: "dark",
+  green: "theme-green",
+  blue: "theme-blue",
+  purple: "theme-purple",
+  rose: "theme-rose",
+  amber: "theme-amber"
+}
+
 export default async function RootLayout({ children }: RootLayoutProps) {
   const session = await getServerSession(authOptions)
+
+  // 控制台输出当前主题映射以便调试
+  console.log("Theme map configured:", themeMap)
 
   return (
     <html lang="zh-CN" suppressHydrationWarning>
@@ -31,6 +45,8 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           defaultTheme="light"
           enableSystem
           disableTransitionOnChange
+          themes={["light", "dark", "green", "blue", "purple", "rose", "amber"]}
+          value={themeMap}
         >
           <SessionProvider session={session}>
             {session ? (

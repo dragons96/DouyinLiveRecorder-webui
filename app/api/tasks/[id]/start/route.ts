@@ -32,6 +32,7 @@ interface WorkerNode {
     maxRecordings: number;
     currentRecordings: number;
   }>;
+  lastSeenAt?: string;
 }
 
 // 新增接口
@@ -66,6 +67,23 @@ interface EnhancedWorkerNode extends WorkerNode {
     max: number;
   };
   availableCapacity: number;
+}
+
+// 添加检查工作节点是否长时间无响应的函数
+function isWorkerInactive(worker: WorkerNode): boolean {
+  // 如果没有最后心跳时间，视为不活跃
+  if (!worker.lastSeenAt) return true;
+  
+  try {
+    const lastSeen = new Date(worker.lastSeenAt);
+    const now = new Date();
+    const oneDayInMs = 24 * 60 * 60 * 1000; // 一天的毫秒数
+    return now.getTime() - lastSeen.getTime() > oneDayInMs;
+  } catch (e) {
+    // 日期解析出错，默认视为不活跃
+    console.error("日期解析错误:", e);
+    return true;
+  }
 }
 
 export async function POST(req: Request, { params }: RouteParams) {
@@ -232,7 +250,7 @@ async function assignWorkersToTask(taskId: string, projectId: string, platformId
     };
   };
 
-  // 获取项目专用节点，包括平台容量数据
+  // 获取项目专用节点，包括平台容量数据和最后活跃时间
   const projectWorkers = await prisma.workerNode.findMany({
     where: {
       status: "RUNNING",
@@ -251,11 +269,11 @@ async function assignWorkersToTask(taskId: string, projectId: string, platformId
     ],
   });
 
-  // 获取通用工作节点，包括平台容量数据
+  // 获取通用工作节点，包括平台容量数据和最后活跃时间
   const generalWorkers = await prisma.workerNode.findMany({
     where: {
       status: "RUNNING",
-      projectId: null  // 通用工作节点（没有关联项目）
+      projectId: null  // 通用工作节点，无项目关联
     },
     include: {
       platformCapacities: {
@@ -269,6 +287,41 @@ async function assignWorkersToTask(taskId: string, projectId: string, platformId
       { currentRecordings: 'asc' },
     ],
   });
+
+  // 检查并更新长时间无响应的节点状态
+  const inactiveWorkerIds: string[] = [];
+  
+  // 检查项目节点
+  for (const worker of projectWorkers) {
+    if (isWorkerInactive(worker)) {
+      inactiveWorkerIds.push(worker.id);
+    }
+  }
+  
+  // 检查通用节点
+  for (const worker of generalWorkers) {
+    if (isWorkerInactive(worker)) {
+      inactiveWorkerIds.push(worker.id);
+    }
+  }
+  
+  // 批量更新长时间无响应的节点状态为STOPPED
+  if (inactiveWorkerIds.length > 0) {
+    await prisma.workerNode.updateMany({
+      where: {
+        id: { in: inactiveWorkerIds }
+      },
+      data: {
+        status: "STOPPED"
+      }
+    });
+    
+    console.log(`已将 ${inactiveWorkerIds.length} 个长时间无响应的节点状态更新为已停止`);
+  }
+
+  // 过滤掉长时间无响应的节点
+  const activeProjectWorkers = projectWorkers.filter(worker => !isWorkerInactive(worker));
+  const activeGeneralWorkers = generalWorkers.filter(worker => !isWorkerInactive(worker));
 
   // 计算工作节点的可用容量（优先使用平台特定容量）
   const getWorkerAvailableCapacity = (worker: any) => {
@@ -303,13 +356,13 @@ async function assignWorkersToTask(taskId: string, projectId: string, platformId
   };
 
   // 通过添加虚拟属性扩展工作节点信息
-  const enhancedProjectWorkers = projectWorkers.map(worker => ({
+  const enhancedProjectWorkers = activeProjectWorkers.map(worker => ({
     ...worker,
     platformRecordings: getWorkerRecordings(worker),
     availableCapacity: getWorkerAvailableCapacity(worker)
   })).filter(worker => worker.availableCapacity > 0);
 
-  const enhancedGeneralWorkers = generalWorkers.map(worker => ({
+  const enhancedGeneralWorkers = activeGeneralWorkers.map(worker => ({
     ...worker,
     platformRecordings: getWorkerRecordings(worker),
     availableCapacity: getWorkerAvailableCapacity(worker)
@@ -381,6 +434,11 @@ async function assignWorkersToTask(taskId: string, projectId: string, platformId
     });
     
     let errorMessage = `可用工作节点容量不足，需要 ${actualResourcesNeeded} 个空闲录制槽，但只有 ${totalAvailableCapacity} 个可用`;
+    
+    // 如果有长时间无响应的节点被更新，则添加提示
+    if (inactiveWorkerIds && inactiveWorkerIds.length > 0) {
+      errorMessage += `\n\n系统检测到 ${inactiveWorkerIds.length} 个工作节点长时间无响应（超过24小时未活跃），已自动将其状态更新为"已停止"。`;
+    }
     
     // 如果有已在处理的可共享流，添加到错误信息中
     if (alreadyProcessingStreams.size > 0) {

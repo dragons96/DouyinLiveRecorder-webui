@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { getSession } from "next-auth/react"
+import { use } from "react"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,15 +15,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner"
 
 interface EditTaskPageProps {
-  params: {
+  params: Promise<{
     id: string
     taskId: string
-  }
+  }>
 }
 
 export default function EditTaskPage({ params }: EditTaskPageProps) {
-  // 解构params对象，而不是直接访问其属性
-  const { id: projectId, taskId } = params;
+  // 使用 React.use() 解包 params
+  const unwrappedParams = use(params)
+  const { id: projectId, taskId } = unwrappedParams;
   
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
@@ -391,7 +393,9 @@ export default function EditTaskPage({ params }: EditTaskPageProps) {
                   name="liveUrls"
                   value={platformParams.liveUrls}
                   onChange={handlePlatformParamsChange}
-                  placeholder={`每行一个直播地址，例如：${selectedPlatform?.name === '抖音' ? 'https://live.douyin.com/123456789' : '请输入直播地址'}`}
+                  placeholder={`每行一个直播地址，例如：${selectedPlatform?.name === '抖音' ? 
+'https://live.douyin.com/123456789、https://live.douyin.com/yall1102 或 https://v.douyin.com/iQFeBnt/' : 
+'请输入直播地址'}`}
                   rows={3}
                   required
                 />

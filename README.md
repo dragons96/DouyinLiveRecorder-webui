@@ -1,4 +1,4 @@
-# 直播录制管理系统
+# DouyinLiveRecorder-webui（直播录制管理系统）
 
 > 本项目是基于 [DouyinLiveRecorder](https://github.com/ihmily/DouyinLiveRecorder) 实现的一个直播在线管理平台，提供了友好的Web界面和更丰富的管理功能。
 
@@ -34,6 +34,53 @@
 
 ![1743681947324](image/README/1743681947324.png)
 
+## 项目交互流程图
+
+系统的核心交互流程如下所示：
+
+```mermaid
+graph TD
+    A[DouyinLiveRecorder-webui] <-->|读取/写入任务和配置| B[(MySQL数据库)]
+    C[DouyinLiveRecorder工作节点] <-->|轮询任务/更新状态| B
+    A -->|创建/管理录制任务| D[用户界面]
+    C -->|首次启动| E[节点自动注册]
+    E -->|写入节点信息| B
+    C -->|拉取录制任务| F[执行录制]
+    F -->|更新任务状态| B
+    A -->|读取节点状态| G[展示节点信息]
+    A -->|启动/停止任务| H[任务状态管理]
+    H -->|更新数据库| B
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style B fill:#bbf,stroke:#333,stroke-width:2px
+    style C fill:#bfb,stroke:#333,stroke-width:2px
+```
+
+### 交互流程说明
+
+1. **工作节点注册机制**：
+
+   - DouyinLiveRecorder工作节点首次启动时会向MySQL数据库注册自身信息
+   - 注册信息包含节点ID信息
+2. **任务分配与执行**：
+
+   - Web管理界面创建录制任务并写入数据库
+   - 工作节点通过轮询机制定期扫描数据库中的待执行任务
+   - 根据任务所属项目和节点配置，选择合适节点执行录制
+3. **状态更新机制**：
+
+   - 工作节点定期向数据库报告任务状态和健康状况
+   - Web界面实时展示节点状态和任务执行情况
+   - 支持通过Web界面远程控制任务的启动、暂停和终止
+4. **任务完成流程**：
+
+   - 任务完成后，工作节点更新数据库中的任务状态
+   - 录制完成的文件信息被记录到数据库
+   - Web界面显示录制完成的状态和文件信息
+
+这种基于数据库的解耦设计使得前端界面与工作节点之间无需直接通信，提高了系统的可扩展性和容错性。工作节点可以在任何位置部署，只需确保能够连接到同一个MySQL数据库即可。
+
+<font color="red">PS：DouyinLiveRecorder-webui使用prisma orm，DouyinLiveRecorder-worker(工作节点)使用sqlalchemy，理论上可以迁移任何适配的关系型数据库，不强制使用MYSQL</font>
+
 ## 快速开始
 
 ### 环境要求
@@ -47,8 +94,8 @@
 1. 克隆仓库
 
 ```bash
-git clone https://github.com/your-username/live-streaming-management.git
-cd live-streaming-management
+git clone https://github.com/dragons96/DouyinLiveRecorder-webui.git
+cd DouyinLiveRecorder-webui
 ```
 
 2. 安装依赖
@@ -61,7 +108,7 @@ pnpm install
 
 创建 `.env` 文件，添加以下配置:
 
-```
+```ini
 DATABASE_URL="mysql://用户名:密码@localhost:3306/live_streaming_management?schema=public&connectionTimeZone=Asia/Shanghai"
 NEXTAUTH_SECRET="生成一个随机密钥" # 可以使用 openssl rand -base64 32 生成
 NEXTAUTH_URL="http://localhost:3000"
@@ -83,9 +130,8 @@ pnpm setup:platforms
 pnpm dev
 ```
 
-6. 访问应用
-
-打开浏览器访问 [http://localhost:3000](http://localhost:3000)
+6. 访问应用，打开浏览器访问 [http://localhost:3000](http://localhost:3000)
+7. 通过注册创建用户，第一个创建用户为超级管理员，后续用户均为普通用户
 
 ## 项目概述
 
@@ -115,6 +161,12 @@ pnpm dev
 - **多平台支持**：支持多种直播平台，可随时扩展添加新平台
 - **平台配置管理**：管理不同平台的API密钥和配置参数
 - **平台状态控制**：可启用或禁用特定平台
+- **批量管理**：支持批量启用/停用多个平台，提高管理效率
+- **高级筛选**：
+  - 支持按平台名称和描述进行模糊搜索
+  - 支持按平台状态（启用/停用）进行筛选
+  - 筛选结果可进行批量操作
+- **表格展示**：以表格形式展示平台列表，清晰显示平台名称、描述和状态
 
 ### 平台初始化
 
@@ -126,25 +178,72 @@ pnpm setup:platforms
 
 该命令会自动创建以下平台：
 
-1. 抖音 (https://live.douyin.com/123456789)
-2. 快手 (https://live.kuaishou.com/u/yall1102)
-3. 虎牙 (https://www.huya.com/52333)
-4. 斗鱼 (https://www.douyu.com/3637778?dyshid=)
-5. YY (https://www.yy.com/22490906/22490906)
-6. BiliBili (https://live.bilibili.com/320)
-7. 小红书 (https://www.xiaohongshu.com/user/profile/6330049c000000002303c7ed?appuid=5f3f478a00000000010005b3)
-8. 网易CC (https://cc.163.com/583946984)
-9. 微博直播 (https://weibo.com/l/wblive/p/show/1022:2321325026370190442592)
-10. 酷狗直播 (https://fanxing2.kugou.com/50428671?refer=2177&sourceFrom=)
-11. 知乎直播 (https://www.zhihu.com/people/ac3a467005c5d20381a82230101308e9)
-12. 京东直播 (https://3.cn/28MLBy-E)
-13. 花椒直播 (https://www.huajiao.com/l/345096174)
-14. 百度直播 (https://live.baidu.com/m/media/pclive/pchome/live.html?room_id=9175031377&tab_category)
-15. 千度热播 (https://qiandurebo.com/web/video.php?roomnumber=33333)
+1. 抖音 (支持多种格式的URL):
+   - https://live.douyin.com/123456789 (数字ID)
+   - https://live.douyin.com/yall1102 (字母数字混合ID)
+   - https://v.douyin.com/iQFeBnt/ (短链接格式)
+2. TikTok (https://www.tiktok.com/@pearlgaga88/live) (需要科学上网)
+3. 快手 (https://live.kuaishou.com/u/yall1102)
+4. 虎牙 (https://www.huya.com/52333)
+5. 斗鱼 (https://www.douyu.com/3637778?dyshid=、https://www.douyu.com/topic/wzDBLS6?rid=4921614&dyshid=)
+6. YY (https://www.yy.com/22490906/22490906)
+7. BiliBili (https://live.bilibili.com/320)
+8. 小红书 (https://www.xiaohongshu.com/user/profile/6330049c000000002303c7ed?appuid=5f3f478a00000000010005b3、http://xhslink.com/xpJpfM)
+9. BIGO直播 (https://www.bigo.tv/cn/716418802)
+10. Blued直播 (https://app.blued.cn/live?id=Mp6G2R)
+11. SOOP (https://play.sooplive.co.kr/sw7love) (需要科学上网)
+12. 网易CC (https://cc.163.com/583946984)
+13. 微博直播 (https://weibo.com/l/wblive/p/show/1022:2321325026370190442592)
+14. 千度热播 (https://qiandurebo.com/web/video.php?roomnumber=33333)
+15. PandaTV (https://www.pandalive.co.kr/live/play/bara0109) (需要科学上网)
+16. 猫耳FM (https://fm.missevan.com/live/868895007)
+17. Look直播 (https://look.163.com/live?id=65108820&position=3)
+18. WinkTV (https://www.winktv.co.kr/live/play/anjer1004) (需要科学上网)
+19. FlexTV (https://www.flextv.co.kr/channels/593127/live) (需要科学上网)
+20. PopkonTV (https://www.popkontv.com/live/view?castId=wjfal007&partnerCode=P-00117) (需要科学上网)
+21. TwitCasting (https://twitcasting.tv/c:uonq) (需要科学上网)
+22. 百度直播 (https://live.baidu.com/m/media/pclive/pchome/live.html?room_id=9175031377&tab_category)
+23. 酷狗直播 (https://fanxing2.kugou.com/50428671?refer=2177&sourceFrom=)
+24. TwitchTV (https://www.twitch.tv/gamerbee) (需要科学上网)
+25. LiveMe (https://www.liveme.com/zh/v/17141543493018047815/index.html)
+26. 花椒直播 (https://www.huajiao.com/l/345096174)
+27. 流星直播 (https://www.7u66.com/100960)
+28. ShowRoom (https://www.showroom-live.com/room/profile?room_id=480206) (需要科学上网)
+29. Acfun (https://live.acfun.cn/live/179922)
+30. 映客直播 (https://www.inke.cn/liveroom/index.html?uid=22954469&id=1720860391070904)
+31. 音播直播 (https://live.ybw1666.com/800002949)
+32. 知乎直播 (https://www.zhihu.com/people/ac3a467005c5d20381a82230101308e9)
+33. CHZZK (https://chzzk.naver.com/live/458f6ec20b034f49e0fc6d03921646d2) (需要科学上网)
+34. 嗨秀直播 (https://www.haixiutv.com/6095106)
+35. VV星球直播 (https://h5webcdn-pro.vvxqiu.com//activity/videoShare/videoShare.html?h5Server=https://h5p.vvxqiu.com&roomId=LP115924473&platformId=vvstar)
+36. 17Live (https://17.live/en/live/6302408) (需要科学上网)
+37. 浪Live (https://www.lang.live/en-US/room/3349463) (需要科学上网)
+38. 畅聊直播 (https://live.tlclw.com/106188)
+39. 飘飘直播 (https://m.pp.weimipopo.com/live/preview.html?uid=91648673&anchorUid=91625862&app=plpl)
+40. 六间房直播 (https://v.6.cn/634435)
+41. 乐嗨直播 (https://www.lehaitv.com/8059096)
+42. 花猫直播 (https://h.catshow168.com/live/preview.html?uid=19066357&anchorUid=18895331)
+43. Shopee (https://sg.shp.ee/GmpXeuf?uid=1006401066&session=802458) (需要科学上网)
+44. Youtube (https://www.youtube.com/watch?v=cS6zS5hi1w0) (需要科学上网)
+45. 淘宝直播 (https://m.tb.cn/h.TWp0HTd) (需要Cookie)
+46. 京东直播 (https://3.cn/28MLBy-E)
+47. Faceit (https://www.faceit.com/zh/players/Compl1/stream) (需要科学上网)
 
 ### 管理员功能
 
 管理员可以在平台管理页面对各平台进行启用或禁用操作，平台名称和链接格式是固定的，不支持修改。
+
+**注意**：标记为"需要科学上网"的平台需要在具有网络代理的环境中使用。
+
+### 平台容量设置
+
+系统会在创建新平台时，自动为所有现有工作节点添加该平台的默认容量配置，初始最大录制数为3。如果您需要为现有平台设置默认容量配置，可以运行以下命令：
+
+```bash
+pnpm setup:platform-capacity
+```
+
+该命令会检查所有平台和工作节点的组合，如果没有对应的容量配置，则创建默认配置（最大录制数为3）。
 
 ### 创建录制任务
 
@@ -192,6 +291,25 @@ pnpm setup:platforms
 - **录制状态监控**：显示当前活跃录制的直播间数量与总直播间数量
 - **节点状态警告**：当工作节点异常时，系统自动显示警告信息
 
+### 多主题支持
+
+系统提供了丰富的主题选择功能，用户可以根据个人偏好定制界面外观：
+
+- **默认主题**：
+
+  - **默认浅色**：清爽明亮的白色主题
+  - **默认深色**：护眼友好的深色主题
+- **自定义彩色主题**：
+
+  - **翠绿主题**：以绿色为基调的清新主题
+  - **蓝海主题**：以蓝色为基调的专业主题
+  - **紫晶主题**：以紫色为基调的优雅主题
+  - **玫瑰主题**：以粉色为基调的温暖主题
+  - **琥珀主题**：以金黄色为基调的活力主题
+- **主题切换**：用户可以通过界面右上角的主题选择器随时切换主题
+- **主题持久化**：系统会记住用户的主题选择，下次访问时自动应用
+- **系统主题适配**：支持跟随系统主题自动切换浅色/深色模式
+
 ## 技术栈
 
 - **前端框架**：Next.js 15（React 19）
@@ -199,6 +317,52 @@ pnpm setup:platforms
 - **认证方案**：NextAuth.js
 - **数据库**：MySQL + Prisma ORM
 - **状态管理**：React Hook Form + Zod
+- **主题系统**：next-themes + CSS变量
+
+## 项目交互流程图
+
+系统的核心交互流程如下所示：
+
+```mermaid
+graph TD
+    A[DouyinLiveRecorder-webui] <-->|读取/写入任务和配置| B[(MySQL数据库)]
+    C[DouyinLiveRecorder工作节点] <-->|轮询任务/更新状态| B
+    A -->|创建/管理录制任务| D[用户界面]
+    C -->|首次启动| E[节点自动注册]
+    E -->|写入节点信息| B
+    C -->|拉取录制任务| F[执行录制]
+    F -->|更新任务状态| B
+    A -->|读取节点状态| G[展示节点信息]
+    A -->|启动/停止任务| H[任务状态管理]
+    H -->|更新数据库| B
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style B fill:#bbf,stroke:#333,stroke-width:2px
+    style C fill:#bfb,stroke:#333,stroke-width:2px
+```
+
+### 交互流程说明
+
+1. **工作节点注册机制**：
+
+   - DouyinLiveRecorder工作节点首次启动时会向MySQL数据库注册自身信息
+   - 注册信息包含节点ID、IP地址、系统信息、版本号等基本信息
+2. **任务分配与执行**：
+
+   - Web管理界面创建录制任务并写入数据库
+   - 工作节点通过轮询机制定期扫描数据库中的待执行任务
+   - 根据任务所属项目和节点配置，选择合适节点执行录制
+3. **状态更新机制**：
+
+   - 工作节点定期向数据库报告任务状态和健康状况
+   - Web界面实时展示节点状态和任务执行情况
+   - 支持通过Web界面远程控制任务的启动、暂停和终止
+4. **任务完成流程**：
+
+   - 任务完成后，工作节点更新数据库中的任务状态
+   - 录制完成的文件信息被记录到数据库
+   - Web界面显示录制完成的状态和文件信息
+
+这种基于数据库的解耦设计使得前端界面与工作节点之间无需直接通信，提高了系统的可扩展性和容错性。工作节点可以在任何位置部署，只需确保能够连接到同一个MySQL数据库即可。
 
 ## 系统架构
 
@@ -238,7 +402,7 @@ pnpm setup:platforms
 
    ```bash
    git clone [仓库地址]
-   cd live-streaming-management
+   cd DouyinLiveRecorder-webui
    ```
 2. 安装依赖
 
@@ -344,3 +508,15 @@ pnpm setup:platforms
 ## 许可证
 
 本项目采用 MIT 许可证。详细许可条款请参阅项目根目录中的 LICENSE 文件。
+
+## 平台URL验证
+
+系统支持多种直播平台的URL格式验证：
+
+1. 每个平台都有特定的URL模式，例如抖音平台现在支持三种格式：
+
+   - 数字ID格式: `https://live.douyin.com/123456789`
+   - 字母数字混合ID格式: `https://live.douyin.com/yall1102`
+   - 短链接格式: `https://v.douyin.com/iQFeBnt/`
+2. 部分海外平台（如TikTok, YouTube等）需要科学上网才能访问，系统会在平台名称后显示"(需要科学上网)"提示。
+3. 淘宝直播平台需要提供Cookie信息才能正常录制。

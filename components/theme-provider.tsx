@@ -11,11 +11,18 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 
   React.useEffect(() => {
     setMounted(true)
-  }, [])
+    console.log("ThemeProvider mounted with props:", props)
+  }, [props])
 
   if (!mounted) {
     return null
   }
 
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
+  return (
+    <NextThemesProvider 
+      {...props}
+    >
+      {children}
+    </NextThemesProvider>
+  )
 }
