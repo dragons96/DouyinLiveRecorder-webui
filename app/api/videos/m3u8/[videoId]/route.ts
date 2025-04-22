@@ -12,6 +12,9 @@ export async function GET(
     const videoId = params.videoId;
     const origin = request.headers.get('origin') || request.nextUrl.origin;
     
+    // 从环境变量中获取API基础URL，如果未定义则使用请求的origin
+    const apiBaseUrl = process.env.NEXTAUTH_URL || origin;
+    
     if (!videoId) {
       return NextResponse.json(
         { error: '需要提供视频ID' },
@@ -56,8 +59,8 @@ export async function GET(
       );
     }
     
-    // 获取网站的完整URL
-    const baseUrl = origin;
+    // 使用从环境变量获取的API基础URL
+    const baseUrl = apiBaseUrl;
     
     // 生成基本的m3u8内容
     // 使用更完整的配置和绝对URL
