@@ -50,9 +50,15 @@ graph TD
     A -->|读取节点状态| G[展示节点信息]
     A -->|启动/停止任务| H[任务状态管理]
     H -->|更新数据库| B
+    I[DouyinLiveRecorder视频上传节点] -->|读取工作节点下载的视频| C
+    I -->|推送视频文件| A
+    A -->|存储视频文件| J[文件系统]
+    A -->|更新任务-视频关联信息| B
     style A fill:#f9f,stroke:#333,stroke-width:2px
     style B fill:#bbf,stroke:#333,stroke-width:2px
     style C fill:#bfb,stroke:#333,stroke-width:2px
+    style I fill:#ffd,stroke:#333,stroke-width:2px
+    style J fill:#dfd,stroke:#333,stroke-width:2px
 ```
 
 ### 交互流程说明
@@ -60,7 +66,7 @@ graph TD
 1. **工作节点注册机制**：
 
    - DouyinLiveRecorder工作节点首次启动时会向MySQL数据库注册自身信息
-   - 注册信息包含节点ID信息
+   - 注册信息包含节点ID、IP地址、系统信息、版本号等基本信息
 2. **任务分配与执行**：
 
    - Web管理界面创建录制任务并写入数据库
@@ -76,6 +82,14 @@ graph TD
    - 任务完成后，工作节点更新数据库中的任务状态
    - 录制完成的文件信息被记录到数据库
    - Web界面显示录制完成的状态和文件信息
+5. **视频上传流程**：
+
+   - 视频上传节点读取工作节点下载的视频内容
+   - 分析视频元数据并提取相关信息
+   - 将视频文件直接推送到Webui
+   - Webui接收视频文件，存储到文件系统中
+   - Webui将任务-视频文件的关联信息更新到数据库
+   - Webui从文件系统和数据库读取信息在界面中展示视频
 
 这种基于数据库的解耦设计使得前端界面与工作节点之间无需直接通信，提高了系统的可扩展性和容错性。工作节点可以在任何位置部署，只需确保能够连接到同一个MySQL数据库即可。
 
@@ -335,9 +349,15 @@ graph TD
     A -->|读取节点状态| G[展示节点信息]
     A -->|启动/停止任务| H[任务状态管理]
     H -->|更新数据库| B
+    I[DouyinLiveRecorder视频上传节点] -->|读取工作节点下载的视频| C
+    I -->|推送视频文件| A
+    A -->|存储视频文件| J[文件系统]
+    A -->|更新任务-视频关联信息| B
     style A fill:#f9f,stroke:#333,stroke-width:2px
     style B fill:#bbf,stroke:#333,stroke-width:2px
     style C fill:#bfb,stroke:#333,stroke-width:2px
+    style I fill:#ffd,stroke:#333,stroke-width:2px
+    style J fill:#dfd,stroke:#333,stroke-width:2px
 ```
 
 ### 交互流程说明
@@ -361,6 +381,14 @@ graph TD
    - 任务完成后，工作节点更新数据库中的任务状态
    - 录制完成的文件信息被记录到数据库
    - Web界面显示录制完成的状态和文件信息
+5. **视频上传流程**：
+
+   - 视频上传节点读取工作节点下载的视频内容
+   - 分析视频元数据并提取相关信息
+   - 将视频文件直接推送到Webui
+   - Webui接收视频文件，存储到文件系统中
+   - Webui将任务-视频文件的关联信息更新到数据库
+   - Webui从文件系统和数据库读取信息在界面中展示视频
 
 这种基于数据库的解耦设计使得前端界面与工作节点之间无需直接通信，提高了系统的可扩展性和容错性。工作节点可以在任何位置部署，只需确保能够连接到同一个MySQL数据库即可。
 
