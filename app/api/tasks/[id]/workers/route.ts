@@ -18,10 +18,13 @@ export async function GET(req: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "未授权" }, { status: 401 })
     }
 
+    // 提前解构并获取任务ID
+    const taskId = (await params).id
+
     // 获取任务信息
     const task = await db.recordingTask.findUnique({
       where: {
-        id: params.id,
+        id: taskId,
       },
       include: {
         project: true,
@@ -45,7 +48,7 @@ export async function GET(req: Request, { params }: RouteParams) {
 
     // 获取当前任务关联的直播流
     const taskLivestreams = await (db as any).taskLivestreamAssignment.findMany({
-      where: { taskId: params.id },
+      where: { taskId },
       include: {
         livestream: true,
       },
@@ -57,7 +60,7 @@ export async function GET(req: Request, { params }: RouteParams) {
     // 获取当前任务的所有直播流工作节点分配
     const taskLWAssignments = await (db as any).taskLivestreamWorkerAssignment.findMany({
       where: { 
-        taskId: params.id,
+        taskId,
       },
       include: {
         livestreamWorkerAssignment: {

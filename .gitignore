@@ -70,3 +70,4 @@ prisma/.env
 # 临时脚本和备份
 scripts/temp/
 *.bak
+storage/

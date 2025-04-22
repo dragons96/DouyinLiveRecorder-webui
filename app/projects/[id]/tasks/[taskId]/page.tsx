@@ -7,6 +7,7 @@ import { db } from "@/lib/db"
 import { checkProjectAccess } from "@/lib/auth-utils"
 import { TaskDetails } from "@/components/tasks/task-details"
 import { TaskLogs } from "@/components/tasks/task-logs"
+import { TaskVideos } from "@/components/task/task-videos"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface TaskPageProps {
@@ -23,11 +24,15 @@ export default async function TaskPage({ params }: TaskPageProps) {
     redirect("/login")
   }
 
+  // 提前解构获取参数
+  const projectId = (await params).id
+  const taskId = (await params).taskId
+
   // 获取任务信息
   const task = await db.recordingTask.findUnique({
     where: {
-      id: params.taskId,
-      projectId: params.id,
+      id: taskId,
+      projectId: projectId,
     },
     include: {
       user: true,
@@ -53,7 +58,7 @@ export default async function TaskPage({ params }: TaskPageProps) {
   // 获取项目信息
   const project = await db.project.findUnique({
     where: {
-      id: params.id,
+      id: projectId,
     },
     include: {
       managers: true,
@@ -89,6 +94,7 @@ export default async function TaskPage({ params }: TaskPageProps) {
         <TabsList>
           <TabsTrigger value="details">任务详情</TabsTrigger>
           <TabsTrigger value="logs">任务日志</TabsTrigger>
+          <TabsTrigger value="videos">录制视频</TabsTrigger>
         </TabsList>
         <TabsContent value="details" className="space-y-4">
           <TaskDetails 
@@ -100,6 +106,9 @@ export default async function TaskPage({ params }: TaskPageProps) {
         </TabsContent>
         <TabsContent value="logs" className="space-y-4">
           <TaskLogs initialLogs={task.logs} taskId={task.id} />
+        </TabsContent>
+        <TabsContent value="videos" className="space-y-4">
+          <TaskVideos taskId={task.id} />
         </TabsContent>
       </Tabs>
     </DashboardShell>

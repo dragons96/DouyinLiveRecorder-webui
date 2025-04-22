@@ -5,6 +5,7 @@ import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { TaskDetails } from "@/components/tasks/task-details"
 import { TaskLogs } from "@/components/tasks/task-logs"
+import { TaskVideos } from "@/components/task/task-videos"
 import { db } from "@/lib/db"
 import { checkProjectAccess } from "@/lib/auth-utils"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
@@ -169,12 +170,16 @@ export default async function TaskPage({ params }: TaskPageProps) {
           <TabsList>
             <TabsTrigger value="details">任务详情</TabsTrigger>
             <TabsTrigger value="logs">任务日志</TabsTrigger>
+            <TabsTrigger value="videos">录制视频</TabsTrigger>
           </TabsList>
           <TabsContent value="details" className="space-y-4">
             <TaskDetails task={task} isAdmin={isProjectAdmin} isTaskCreator={isTaskCreator} isSuperAdmin={isSuperAdmin} />
           </TabsContent>
           <TabsContent value="logs" className="space-y-4">
             <TaskLogs initialLogs={taskData.logs} taskId={task.id} canManageLogs={canManageLogs} />
+          </TabsContent>
+          <TabsContent value="videos" className="space-y-4">
+            <TaskVideos taskId={task.id} />
           </TabsContent>
         </Tabs>
       </DashboardShell>

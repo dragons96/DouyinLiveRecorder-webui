@@ -27,12 +27,15 @@ export default async function ProjectPage({ params, searchParams }: ProjectPageP
     redirect("/login")
   }
 
+  // 提前获取项目ID
+  const projectId = params.id
+
   // 检查用户是否是超级管理员
   const isSuperAdmin = await isSystemAdmin(session.user.id)
 
   const project = await db.project.findUnique({
     where: {
-      id: params.id,
+      id: projectId,
     },
     include: {
       users: true,

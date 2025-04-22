@@ -18,12 +18,13 @@ export async function GET(req: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "未授权" }, { status: 401 })
     }
 
-    const { id } = params
+    // 提前解构并获取任务ID
+    const taskId = (await params).id
 
     // 获取任务信息
     const task = await db.recordingTask.findUnique({
       where: {
-        id,
+        id: taskId,
       },
       include: {
         project: true,
@@ -48,7 +49,7 @@ export async function GET(req: Request, { params }: RouteParams) {
     // 获取录制时间段记录，按开始时间倒序排列
     const recordingPeriods = await db.recordingPeriod.findMany({
       where: {
-        taskId: id,
+        taskId,
       },
       orderBy: {
         startedAt: "desc",
@@ -70,12 +71,13 @@ export async function DELETE(req: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "未授权" }, { status: 401 })
     }
 
-    const { id } = params
+    // 提前解构并获取任务ID
+    const taskId = params.id
 
     // 获取任务信息
     const task = await db.recordingTask.findUnique({
       where: {
-        id,
+        id: taskId,
       },
       include: {
         project: true,
@@ -103,7 +105,7 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     // 删除该任务的所有录制时间段记录
     const result = await db.recordingPeriod.deleteMany({
       where: {
-        taskId: id,
+        taskId,
       },
     })
 

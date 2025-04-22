@@ -77,6 +77,7 @@ model RecordingTask {
   taskLivestreams       TaskLivestreamAssignment[]
   taskWorkerAssignments TaskLivestreamWorkerAssignment[]
   recordingPeriods      RecordingPeriod[]               // 录制时间段记录
+  recordedVideos        RecordedVideo[]                 // 录制的视频文件
 
   @@map("recording_tasks")
 }
@@ -184,6 +185,27 @@ model WorkerNodePlatformCapacity {
   @@map("worker_node_platform_capacities")
 }
 
+// 录制视频文件记录
+model RecordedVideo {
+  id               String           @id @default(cuid())
+  filename         String           // 文件名
+  originalFilename String?          // 原始文件名
+  filePath         String           // 文件在服务器上的路径
+  fileSize         Int              // 文件大小(字节)
+  fileType         String           // 文件类型(TS, MP4, FLV等)
+  recordName       String           // 录制名称
+  metadata         String?          @db.Text // 存储额外元数据，如录制URL、设备ID等
+  taskId           String?          // 关联的录制任务ID
+  uploadedAt       DateTime         @default(now())
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  task             RecordingTask?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  periodId         String?          // 关联的录制时间段ID
+  period           RecordingPeriod? @relation(fields: [periodId], references: [id], onDelete: SetNull)
+
+  @@map("recorded_videos")
+}
+
 // 任务录制时间段记录
 model RecordingPeriod {
   id          String        @id @default(cuid())
@@ -197,6 +219,7 @@ model RecordingPeriod {
   streamUrls  String? @db.Text       // 该次录制的URL列表，JSON字符串
   platformParams String? @db.Text    // 该次录制的平台参数，JSON字符串
   workerData  String? @db.Text // 工作节点信息，JSON字符串，使用Text类型存储大文本
+  videos      RecordedVideo[] // 关联的录制视频文件
 
   @@map("recording_periods")
 }

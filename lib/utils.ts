@@ -56,3 +56,30 @@ export function toLocalTime(date: string | Date, format: boolean = true): Date |
   // 现在默认不进行时区转换
   return formatDateTime(date, false, format);
 }
+
+/**
+ * 格式化日期，返回YYYY-MM-DD HH:MM:SS格式的字符串
+ * @param date 日期字符串或Date对象
+ * @returns 格式化后的日期字符串
+ */
+export function formatDate(date: string | Date): string {
+  return formatDateTime(date, false, true) as string;
+}
+
+/**
+ * 格式化文件大小
+ * @param bytes 文件大小（字节）
+ * @param decimals 小数点位数
+ * @returns 格式化后的文件大小字符串
+ */
+export function formatBytes(bytes: number, decimals: number = 2): string {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
